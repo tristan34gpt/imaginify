@@ -62,16 +62,18 @@ export async function POST(req: Request) {
       photo: image_url,
     };
 
+    console.log("Creating user:", user);
+
     const newUser = await createUser(user);
 
-    if (newUser) {
-      // Update Clerk user metadata
-      await updateUserMetadata(id, {
-        publicMetadata: {
-          userId: newUser._id,
-        },
+    if (!newUser) {
+      console.error("Failed to create user:", user);
+      return new Response("Error occured during user creation", {
+        status: 500,
       });
     }
+
+    console.log("User created successfully:", newUser);
 
     return NextResponse.json({ message: "OK", user: newUser });
   }
@@ -88,6 +90,13 @@ export async function POST(req: Request) {
 
     const updatedUser = await updateUser(id, user);
 
+    if (!updatedUser) {
+      console.error("Failed to update user:", user);
+      return new Response("Error occured during user update", {
+        status: 500,
+      });
+    }
+
     return NextResponse.json({ message: "OK", user: updatedUser });
   }
 
@@ -96,18 +105,24 @@ export async function POST(req: Request) {
 
     const deletedUser = await deleteUser(id!);
 
+    if (!deletedUser) {
+      console.error("Failed to delete user:", id);
+      return new Response("Error occured during user deletion", {
+        status: 500,
+      });
+    }
+
     return NextResponse.json({ message: "OK", user: deletedUser });
   }
 
-  console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
+  console.log(`Webhook with ID ${id} and type ${eventType}`);
   console.log("Webhook body:", body);
 
   return new Response("", { status: 200 });
 }
 
-// Function to update user metadata in Clerk
+// Function to update user metadata in Clerk (if needed)
 async function updateUserMetadata(userId: string, metadata: any) {
-  // Use Clerk's API or SDK to update user metadata
   const clerkResponse = await fetch(
     `https://api.clerk.dev/v1/users/${userId}/metadata`,
     {
